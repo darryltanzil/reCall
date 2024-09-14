@@ -1,0 +1,16 @@
+.container {
+    position: relative;
+    width: 640px;
+    height: 480px;
+    align-items: center;
+}
+
+#canvasRef {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+button {
+    z-index: 9;
+}
