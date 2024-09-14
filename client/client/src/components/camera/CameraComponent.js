@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import "./CameraStyle.css";
 import html2canvas from 'html2canvas';
-import MotivationComponent from './MotivationComponent';
+import RecallComponent from './RecallComponent';
 
 const CameraComponent = () => {
     const [stream, setStream] = useState(null);
@@ -231,7 +231,7 @@ const CameraComponent = () => {
                 </button>
             </div>
 
-            <MotivationComponent parentScore={score} />
+            <RecallComponent parentScore={score} />
 
             <div id="imageGrid" style={{
                 display: 'grid',
