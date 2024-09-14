@@ -27,7 +27,7 @@ app.post('/frame', async(req, res) => {
   }
 
   try {
-    const docRef = await db.collection('frames').add({
+    const docRef = await db.collection('frame').add({
       transcript: transcript,
       timestamp: timestamp,
       context: context // context should have objects and actions
@@ -50,8 +50,12 @@ app.get('/find', async(req, res) => {
 
   try {
     const result = await find(object, time);
+    
+    const replyString = `The ${object} was last seen at ${result.location}, ${result.time} ago. 
+                        Here is a memory snapshot: ${result.img}`;
 
-    res.status(200).json(result);
+    res.send(replyString);
+    // res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

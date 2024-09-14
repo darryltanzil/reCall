@@ -8,23 +8,24 @@ const db = require('./firebase/firebase');
  */
 async function find(object, time) {
   try {
-    let query = db.collection('frames').where('context.objects', 'array-contains', object);
+    let query = db.collection('frame').where('context.objects', 'array-contains', object);
+    // if (time) {
+    //     print(time)
+    //     const endTime = new Date().toISOString(); // Current time
+    //     const startTime = new Date(new Date() - (parseTimeToMillis(time))).toISOString();
+    //     query = query.where('timestamp', '>=', startTime).where('timestamp', '<=', endTime);
+    // } else {
+    //     // If no time specified, search within the last 2 weeks
+    //     const endTime = new Date().toISOString(); // Current time
+    //     const startTime = new Date(new Date() - (14 * 24 * 60 * 60 * 1000)).toISOString(); // 2 weeks ago
+    //     query = query.where('timestamp', '>=', startTime).where('timestamp', '<=', endTime);
+    // }
 
-    if (time) {
-      // If time is specified, use it to filter results
-      const endTime = new Date().toISOString(); // Current time
-      const startTime = new Date(new Date() - (parseTimeToMillis(time))).toISOString();
-      query = query.where('timestamp', '>=', startTime).where('timestamp', '<=', endTime);
-    } else {
-      // If no time specified, search within the last 2 weeks
-      const endTime = new Date().toISOString(); // Current time
-      const startTime = new Date(new Date() - (14 * 24 * 60 * 60 * 1000)).toISOString(); // 2 weeks ago
-      query = query.where('timestamp', '>=', startTime).where('timestamp', '<=', endTime);
-    }
-
+    // descending means most recent time where it occurred
     const snapshot = await query.orderBy('timestamp', 'desc').limit(1).get();
 
     if (snapshot.empty) {
+        console.log("nothing found")
       return {
         location: "Unknown",
         timestamp: null,
@@ -33,9 +34,10 @@ async function find(object, time) {
     }
 
     const data = snapshot.docs[0].data();
+    const timeAgo = calculateTimeAgo(new Date(data.timestamp));
     return {
       location: data.context.location || "Unknown",
-      timestamp: data.timestamp,
+      time: timeAgo,
       img: data.context.img || null
     };
   } catch (error) {
@@ -71,6 +73,32 @@ function parseTimeToMillis(time) {
     }
   }
   return 0;
+}
+
+/**
+ * Calculates how long ago a given timestamp was in a human-readable format.
+ * @param {Date} pastDate - The timestamp of when the object was last seen.
+ * @returns {string} - A string representing how long ago the event happened.
+ */
+function calculateTimeAgo(pastDate) {
+    const currTime = new Date();
+    const diffInMillis = currTime - pastDate;
+  
+    // convert milliseconds back to readable units
+    const minutes = Math.floor(diffInMillis / (1000 * 60));
+    const hours = Math.floor(diffInMillis / (1000 * 60 * 60));
+    const days = Math.floor(diffInMillis / (1000 * 60 * 60 * 24));
+    const weeks = Math.floor(diffInMillis / (1000 * 60 * 60 * 24 * 7));
+  
+    if (minutes < 60) {
+      return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+    } else if (hours < 24) {
+      return `${hours} hour${hours !== 1 ? 's' : ''}`;
+    } else if (days < 7) {
+      return `${days} day${days !== 1 ? 's' : ''}`;
+    } else {
+      return `${weeks} week${weeks !== 1 ? 's' : ''}`;
+    }
 }
 
 module.exports = find;
