@@ -1,5 +1,5 @@
 import React from "react";
-import CameraComponent from "../tensorflow/CameraComponent";
+import CameraComponent from "../camera/CameraComponent";
 import "./LivePage.css";
 
 
