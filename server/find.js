@@ -4,18 +4,16 @@ const db = require('./firebase/firebase');
  * Finds the location and timestamp of an object based on the specified time.
  * @param {string} object - The name of the object to search for.
  * @param {string} [time] - The time interval to search within (optional).
- * @returns {Promise<Object>} - The result containing location, timestamp, and image.
+ * @returns {Promise<Object>} - The result containing location, timeAgo, and panel.
  */
-async function find(object, time) {
+async function find(object, timestamp) {
   try {
     let query = db.collection('frame').where('context.objects', 'array-contains', object);
-    // if (time) {
-    //     print(time)
+    // if (timestamp) {
     //     const endTime = new Date().toISOString(); // Current time
     //     const startTime = new Date(new Date() - (parseTimeToMillis(time))).toISOString();
     //     query = query.where('timestamp', '>=', startTime).where('timestamp', '<=', endTime);
     // } else {
-    //     // If no time specified, search within the last 2 weeks
     //     const endTime = new Date().toISOString(); // Current time
     //     const startTime = new Date(new Date() - (14 * 24 * 60 * 60 * 1000)).toISOString(); // 2 weeks ago
     //     query = query.where('timestamp', '>=', startTime).where('timestamp', '<=', endTime);
@@ -28,8 +26,8 @@ async function find(object, time) {
         console.log("nothing found")
       return {
         location: "Unknown",
-        timestamp: null,
-        img: null
+        timeAgo: null,
+        panel: null
       };
     }
 
@@ -37,8 +35,8 @@ async function find(object, time) {
     const timeAgo = calculateTimeAgo(new Date(data.timestamp));
     return {
       location: data.context.location || "Unknown",
-      time: timeAgo,
-      img: data.context.img || null
+      timeAgo: timeAgo,
+      panel: data.context.panel || null
     };
   } catch (error) {
     console.error('Error finding object:', error);
