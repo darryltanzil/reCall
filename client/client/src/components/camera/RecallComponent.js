@@ -68,7 +68,13 @@ const SpeechComponent = () => {
                 model: 'gpt-3.5-turbo',
                 messages: [{
                     role: 'system',
-                    content: `Extract the specific object or action being referred to in the following sentence: "${sentences}". Respond in the format { "object": "A string that is either 'wallet', 'water bottle', or 'keys'" } or { "question": "'did i high five someone'', 'was I in front of a grouo of people'" }.`
+                    content: `Extract the specific object or action being referred to in the following sentence: "${sentences}". 
+                    A good indicator for object is if the sentence relates to finding something, and starts with "where is ..."
+                    A good indicator for action is if the sentence relates to an action that was performed, and starts with "did I ..."
+
+                    If an object, it should come from the given sentence, such as "water bottle", "wallet", "hat". 
+                    If an action, it should also come from the given sentence, such as "interact with a person", "walk left to right".
+                    Respond in the format: { "object": "extracted object" } or for action, { "question": "extracted action" }.`
                 }],
                 max_tokens: 30
             };
