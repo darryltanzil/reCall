@@ -1,14 +1,13 @@
 import React, { useState, useRef } from 'react';
 import "./CameraStyle.css";
 import html2canvas from 'html2canvas';
-import RecallComponent from './RecallComponent';
 
 const CameraComponent = () => {
     const [stream, setStream] = useState(null);
-    const [score, setScore] = useState(null);
     const [screenshotUrls, setScreenshotUrls] = useState([]);
     const [apiResponse, setApiResponse] = useState(null);
     const screenshotCount = useRef(0);
+    const intervalRef = useRef(null);
 
     const webcamVideo = useRef();
     const canvasRef = useRef();
@@ -19,11 +18,7 @@ const CameraComponent = () => {
     const startVideoStream = async () => {
         try {
             const devices = await navigator.mediaDevices.enumerateDevices();
-
-            console.log('Available media devices:', devices);
-
             const videoDevices = devices.filter(device => device.kind === 'videoinput');
-
             const continuityCameraDevice = videoDevices.find(device =>
                 device.label.includes('iPhone') || device.label.includes('Continuity')
             );
@@ -35,7 +30,7 @@ const CameraComponent = () => {
 
             const newStream = await navigator.mediaDevices.getUserMedia({
                 video: {
-                    deviceId: continuityCameraDevice.deviceId, // Use the iPhone's device ID
+                    deviceId: continuityCameraDevice.deviceId,
                     width: videoWidth,
                     height: videoHeight
                 },
@@ -43,12 +38,18 @@ const CameraComponent = () => {
             });
 
             webcamVideo.current.srcObject = newStream;
-            webcamVideo.current.width = videoWidth;
-            webcamVideo.current.height = videoHeight;
             setStream(newStream);
-
         } catch (err) {
             console.error('Error: Failed to access the video stream', err);
+        }
+    };
+
+    const stopVideoStream = () => {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop()); // Stop all video tracks
+            setStream(null);
+            clearInterval(intervalRef.current); // Clear the interval to stop capturing images
+            console.log('Webcam stream stopped');
         }
     };
 
@@ -63,32 +64,6 @@ const CameraComponent = () => {
             reader.readAsDataURL(imageBlob);
         });
     };
-
-    async function sendPostRequest(requestData) {
-        try {
-            requestData = JSON.parse(requestData);
-            requestData.timestamp = new Date().toISOString();
-            const response = await fetch('https://recall-gjjyaf73h-skyleapas-projects.vercel.app/frame', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestData)
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-            }
-
-            const data = await response.json();
-            setApiResponse(data.choices[0].message.content);
-            console.log('API response:', JSON.stringify(data, null, 2));
-            return data;
-        } catch (error) {
-            console.error('Error sending request to API:', error);
-        }
-    }
 
     const sendToAPI = async (base64Image) => {
         const prompt = {
@@ -176,8 +151,7 @@ const CameraComponent = () => {
             }
 
             const data = await response.json();
-            await sendPostRequest(data.choices[0].message.content);
-            console.log('API response:', JSON.stringify(data.choices[0].message.content, null, 2));
+            setApiResponse(data.choices[0].message.content);
             return data;
         } catch (error) {
             console.error('Error sending image to API:', error);
@@ -189,7 +163,7 @@ const CameraComponent = () => {
 
         const render = async () => {
             const context = canvasRef.current.getContext('2d');
-            setInterval(async () => {
+            intervalRef.current = setInterval(async () => {
                 context.drawImage(webcamVideo.current, 0, 0, videoWidth, videoHeight);
                 const screenshotDataUrl = canvasRef.current.toDataURL('image/png');
                 setScreenshotUrls(prevScreenshotUrls => [...prevScreenshotUrls, screenshotDataUrl]);
@@ -201,17 +175,14 @@ const CameraComponent = () => {
                     html2canvas(imageGrid).then(async (canvas) => {
                         const blob = await new Promise((resolve) => canvas.toBlob(resolve));
                         const base64Image = await encodeImage(blob);
-
-                        // Send image to API
                         await sendToAPI(base64Image);
 
-                        // Trigger download
-                        const link = document.createElement('a');
-                        link.download = 'screenshot.png';
-                        link.href = canvas.toDataURL('image/png');
-                        link.click();
+                        // // Trigger download
+                        // const link = document.createElement('a');
+                        // link.download = 'screenshot.png';
+                        // link.href = canvas.toDataURL('image/png');
+                        // link.click();
                     });
-
                     screenshotCount.current = 0;
                     imageGrid.innerHTML = '';
                 }
@@ -230,9 +201,12 @@ const CameraComponent = () => {
                 </div>
             </div>
 
-            <div className="arg">
-                <button className="peepee" onClick={() => startStream()}>
+            <div className="button-container">
+                <button className="start-webcam-button" onClick={startStream}>
                     Start webcam
+                </button>
+                <button className="stop-webcam-button" onClick={stopVideoStream}>
+                    Stop webcam
                 </button>
             </div>
 

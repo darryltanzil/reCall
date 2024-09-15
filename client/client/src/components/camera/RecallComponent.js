@@ -150,7 +150,7 @@ const SpeechComponent = () => {
 
     return (
         <div className="message-container">
-            <button onClick={startRecognition}>Start Speech Recognition</button> {/* New button */}
+            <button onClick={startRecognition} className="start-webcam-button">Start Speech Recognition</button> {/* New button */}
             <p className="message-text">Start the sentence with the word "recall" to obtain memories.</p>
             <div className="conversation">
                 {conversationLog.map((log, index) => (

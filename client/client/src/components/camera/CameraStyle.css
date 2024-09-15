@@ -1,3 +1,52 @@
+/* Style for buttons */
+.start-webcam-button, .stop-webcam-button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin: 10px;
+}
+
+/* Start webcam button */
+.start-webcam-button {
+    background-color: #3F3F3F;
+    color: white;
+}
+
+.start-webcam-button:hover {
+    background-color: white;
+    color: #3F3F3F;
+    transform: scale(1.05);
+}
+
+/* Stop webcam button */
+.stop-webcam-button {
+    background-color: #3F3F3F;
+    color: white;
+}
+
+.stop-webcam-button:hover {
+    background-color: white;
+    color: #3F3F3F;
+    transform: scale(1.05);
+}
+
+/* General button hover effect */
+.start-webcam-button:active, .stop-webcam-button:active {
+    transform: scale(0.98);
+}
+
+/* Container for buttons */
+.button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+
 .container {
     position: relative;
     width: 640px;
@@ -22,7 +71,7 @@ button {
     padding: 20px;
     max-width: 1200px;
     margin: 0 auto;
-    background-color: #3C96FC; /* Light background for contrast */
+    background-color: white; /* Light background for contrast */
     border-radius: 8px; /* Rounded corners for the container */
     box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Subtle shadow for depth */
 }
@@ -55,10 +104,10 @@ video, canvas {
 }
 
 .peepee {
-    padding: 10px 20px;
+    padding: 10px 10px;
     font-size: 16px;
     color: #fff;
-    background-color: #3C96FC;
+    background-color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
@@ -66,7 +115,7 @@ video, canvas {
 }
 
 .peepee:hover {
-    background-color: #3C96FC;
+    background-color: white;
 }
 
 /* Styling for image grid */
@@ -88,8 +137,8 @@ img {
 /* Styling for API response */
 .api-response {
     margin-top: 20px;
-    padding: 20px;
-    background-color: #3C96FC; /* White background for contrast */
+    padding: 10px;
+    background-color: #CD4536; /* White background for contrast */
     border: 1px solid #ddd;
     border-radius: 8px;
 }
@@ -104,7 +153,7 @@ img {
     white-space: pre-wrap; /* Preserve whitespace formatting */
     word-wrap: break-word; /* Break long words to fit container */
     margin: 0;
-    background-color: #3C96FC; /* Slightly different background for preformatted text */
+    background-color: #CD4536; /* Slightly different background for preformatted text */
     padding: 10px;
     border-radius: 4px; /* Rounded corners for preformatted text */
 }
