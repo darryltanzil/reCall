@@ -32,6 +32,7 @@ const SpeechComponent = () => {
                     classifyAndExtractObjectOrAction(sentencesAfterTrigger.current.trim());
                 } else if (transcript.toLowerCase().includes('recall') && now - lastRecallTime.current > 2000) {
                     lastRecallTime.current = now;
+                    speakText("Yes?");
                     console.log(`"Recall" detected in sentence: ${transcript}`);
                     setTriggered(true);
                     sentencesAfterTrigger.current = ''; // Reset after "recall"
@@ -67,11 +68,11 @@ const SpeechComponent = () => {
                 model: 'gpt-3.5-turbo',
                 messages: [{
                     role: 'system',
-                    content: `Extract the specific object or action being referred to in the following sentence: "${sentences}". It has to be either "wallet", or "keys", or an action as in "leave the door open". Respond in the format { "object": "extracted object" } or { "question": "extracted action" }.`
+                    content: `Extract the specific object or action being referred to in the following sentence: "${sentences}". Respond in the format { "object": "A string that is either 'wallet', 'water bottle', or 'keys'" } or { "question": "'did i high five someone'', 'was I in front of a grouo of people'" }.`
                 }],
                 max_tokens: 30
             };
-
+            console.log(`Extract the specific object or action being referred to in the following sentence: "${sentences}". Respond in the format { "object": "A string that is either 'wallet', 'water bottle', or 'keys'" } or { "question": "'did i high five someone'', 'was I in front of a grouo of people'" }.`);
             const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: {
