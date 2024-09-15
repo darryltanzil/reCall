@@ -151,12 +151,39 @@ const CameraComponent = () => {
             }
 
             const data = await response.json();
+            await sendPostRequest(data.choices[0].message.content);
             setApiResponse(data.choices[0].message.content);
             return data;
         } catch (error) {
             console.error('Error sending image to API:', error);
         }
     };
+
+    async function sendPostRequest(requestData) {
+        try {
+            requestData = JSON.parse(requestData);
+            requestData.timestamp = new Date().toISOString();
+            const response = await fetch('https://recall-gjjyaf73h-skyleapas-projects.vercel.app/frame', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
+
+            const data = await response.json();
+            setApiResponse(data.choices[0].message.content);
+            console.log('API response:', JSON.stringify(data, null, 2));
+            return data;
+        } catch (error) {
+            console.error('Error sending request to API:', error);
+        }
+    }
 
     const startStream = async () => {
         await startVideoStream();
@@ -177,11 +204,11 @@ const CameraComponent = () => {
                         const base64Image = await encodeImage(blob);
                         await sendToAPI(base64Image);
 
-                        // // Trigger download
-                        // const link = document.createElement('a');
-                        // link.download = 'screenshot.png';
-                        // link.href = canvas.toDataURL('image/png');
-                        // link.click();
+                        // Trigger download
+                        const link = document.createElement('a');
+                        link.download = 'screenshot.png';
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
                     });
                     screenshotCount.current = 0;
                     imageGrid.innerHTML = '';
