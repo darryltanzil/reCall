@@ -2,12 +2,13 @@ const action = require('./action');
 const bodyParser = require('body-parser');
 const db = require('./firebase/firebase');
 const express = require('express');
-const find = require('./find');
+const { find } = require('./find');
+const cors = require('cors');
 
 const app = express();
-const port = process.env.PORT || 3001; // Use environment variable for port
-
+const port = process.env.PORT || 3001;
 app.use(bodyParser.json());
+app.use(cors());
 
 app.get('/', (req, res) => {
   res.send('Welcome to the reCall server!');
@@ -36,8 +37,10 @@ app.get('/find', async (req, res) => {
 
   try {
     const result = await find(object, timestamp);
-    
-    const replyString = `The ${object} was last seen at ${result.location}, ${result.timeAgo} ago. Here is a memory snapshot: ${result.panel || 'No image available'}`;
+    let replyString = `The ${object} was last seen at ${result.location}, ${result.timeAgo}.`;
+    if (result.location == "Unknown") {
+      replyString = `Could not find ${object} in your memories`
+    }
 
     res.send(replyString);
   } catch (error) {
@@ -51,12 +54,12 @@ app.get('/action', async (req, res) => {
 
   try {
     const result = await action(question);
-    let replyString = `You have not ${question} in the last ${result.timeAgo}`;
+
+    let replyString = `${result}`;
     
     if (result.actionPerformed) {
-      replyString = `You ${question} at ${result.location}, ${result.timeAgo}`;
+      replyString = `${result.response} ${result.timeAgo}`;
     }
-
     res.send(replyString);
   } catch (error) {
     res.status(500).json({ error: error.message });

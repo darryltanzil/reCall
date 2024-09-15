@@ -6,19 +6,9 @@ const db = require('./firebase/firebase');
  * @param {string} [time] - The time interval to search within (optional).
  * @returns {Promise<Object>} - The result containing location, timeAgo, and panel.
  */
-async function find(object, timestamp) {
+async function find(object) {
   try {
     let query = db.collection('frame').where('context.objects', 'array-contains', object);
-    // if (timestamp) {
-    //     const endTime = new Date().toISOString(); // Current time
-    //     const startTime = new Date(new Date() - (parseTimeToMillis(time))).toISOString();
-    //     query = query.where('timestamp', '>=', startTime).where('timestamp', '<=', endTime);
-    // } else {
-    //     const endTime = new Date().toISOString(); // Current time
-    //     const startTime = new Date(new Date() - (14 * 24 * 60 * 60 * 1000)).toISOString(); // 2 weeks ago
-    //     query = query.where('timestamp', '>=', startTime).where('timestamp', '<=', endTime);
-    // }
-
     // descending means most recent time where it occurred
     const snapshot = await query.orderBy('timestamp', 'desc').limit(1).get();
 
@@ -26,8 +16,7 @@ async function find(object, timestamp) {
         console.log("nothing found")
       return {
         location: "Unknown",
-        timeAgo: null,
-        panel: null
+        timeAgo: null
       };
     }
 
@@ -35,8 +24,7 @@ async function find(object, timestamp) {
     const timeAgo = calculateTimeAgo(new Date(data.timestamp));
     return {
       location: data.context.location || "Unknown",
-      timeAgo: timeAgo,
-      panel: data.context.panel || null
+      timeAgo: timeAgo
     };
   } catch (error) {
     console.error('Error finding object:', error);
@@ -89,14 +77,17 @@ function calculateTimeAgo(pastDate) {
     const weeks = Math.floor(diffInMillis / (1000 * 60 * 60 * 24 * 7));
   
     if (minutes < 60) {
-      return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+      return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
     } else if (hours < 24) {
-      return `${hours} hour${hours !== 1 ? 's' : ''}`;
+      return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
     } else if (days < 7) {
-      return `${days} day${days !== 1 ? 's' : ''}`;
+      return `${days} day${days !== 1 ? 's' : ''} ago`;
     } else {
-      return `${weeks} week${weeks !== 1 ? 's' : ''}`;
+      return `${weeks} week${weeks !== 1 ? 's' : ''} ago`;
     }
 }
 
-module.exports = find;
+module.exports = {
+  find,
+  calculateTimeAgo
+};
