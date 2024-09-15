@@ -1,5 +1,5 @@
 .tensorflow-container {
-  background-color: #6D8A96;
+  background-color: #3C96FC;
   width: 700px;
   height: 490px;
   padding-left: 1.5%;
@@ -14,12 +14,12 @@
 
 .begin-button-lp {
   background-color: #ffffff;
-  color: #5D707F;
+  color: #a4b3be;
   border: 2px solid #5D707F; /* Green */
   width: 180px;
   height: 55px;
   font-size: 30px;
-  font-family: Numans;
+  font-family: Helvetica;
   transition-duration: 0.3s;
   margin: 0px 50px 50px 0px;
 }
@@ -103,6 +103,7 @@
   margin-top: 30px;
   margin-left: 50px;
   display: grid;
+  position: relative;
 }
 
 .head-lp {

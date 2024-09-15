@@ -5,7 +5,7 @@
     align-items: center;
 }
 
-#canvasRef {
+#memories {
     position: absolute;
     top: 0;
     left: 0;
@@ -13,4 +13,98 @@
 
 button {
     z-index: 9;
+}
+
+/* General styling for the component */
+.main-container {
+    font-family: 'Arial', sans-serif;
+    color: #333;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: #3C96FC; /* Light background for contrast */
+    border-radius: 8px; /* Rounded corners for the container */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Subtle shadow for depth */
+}
+
+/* Styling for the video container */
+.tensorflow-container {
+    margin-bottom: 20px;
+}
+
+.container {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden; /* Ensure corners are rounded */
+}
+
+video, canvas {
+    width: 100%;
+    height: auto;
+    display: block; /* Prevents extra space below video/canvas */
+}
+
+/* Styling for controls */
+.arg {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.peepee {
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #3C96FC;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.peepee:hover {
+    background-color: #3C96FC;
+}
+
+/* Styling for image grid */
+#imageGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-gap: 15px;
+    margin-top: 20px;
+}
+
+img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px; /* Rounded corners for images */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle shadow */
+    object-fit: cover; /* Maintain aspect ratio and cover grid cell */
+}
+
+/* Styling for API response */
+.api-response {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #3C96FC; /* White background for contrast */
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.api-response h3 {
+    margin-top: 0;
+    font-size: 20px;
+    color: #333;
+}
+
+.api-response pre {
+    white-space: pre-wrap; /* Preserve whitespace formatting */
+    word-wrap: break-word; /* Break long words to fit container */
+    margin: 0;
+    background-color: #3C96FC; /* Slightly different background for preformatted text */
+    padding: 10px;
+    border-radius: 4px; /* Rounded corners for preformatted text */
 }

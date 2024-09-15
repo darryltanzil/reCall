@@ -55,10 +55,12 @@ app.get('/action', async (req, res) => {
   try {
     const result = await action(question);
 
-    let replyString = `${result}`;
-    
+    let replyString = `${result.response}`;  // Initialize with the AI's response
+
     if (result.actionPerformed) {
       replyString = `${result.response} ${result.timeAgo}`;
+    } else if (!result.actionPerformed) {
+      replyString = 'No, the action was not performed recently.';
     }
     res.send(replyString);
   } catch (error) {

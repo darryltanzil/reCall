@@ -68,7 +68,7 @@ const CameraComponent = () => {
         try {
             requestData = JSON.parse(requestData);
             requestData.timestamp = new Date().toISOString();
-            const response = await fetch('https://recall-c320lqmkc-skyleapas-projects.vercel.app/frame', {
+            const response = await fetch('https://recall-h6ysv0xkw-skyleapas-projects.vercel.app/frame', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -82,6 +82,7 @@ const CameraComponent = () => {
             }
 
             const data = await response.json();
+            setApiResponse(data.choices[0].message.content);
             console.log('API response:', JSON.stringify(data, null, 2));
             return data;
         } catch (error) {
@@ -230,14 +231,6 @@ const CameraComponent = () => {
             </div>
 
             <div className="arg">
-                <div className="modified-container-lp">
-                    <button className="modified-button-lp">
-                        <div className="title-description-dp">
-                            Score: {score}
-                        </div>
-                    </button>
-                </div>
-
                 <button className="peepee" onClick={() => startStream()}>
                     Start webcam
                 </button>
