@@ -43,7 +43,7 @@ const mockFindQuery2 = {
 };
 
 const mockActionQuery = {
-  question: 'did i move my water bottle?'
+  question: 'did I leave my water bottle on the table?'
 };
 
 // Function to test POST /frame
