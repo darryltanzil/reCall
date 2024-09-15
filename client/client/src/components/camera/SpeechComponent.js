@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
+import { Configuration, OpenAIApi } from 'openai';
 
 // Ensure you have SpeechRecognition available (e.g., via browser API or a library)
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -9,6 +10,12 @@ const SpeechComponent = () => {
     const [triggered, setTriggered] = useState(false);
     const lastRecallTime = useRef(0);
     const sentencesAfterTrigger = useRef('');
+
+    // OpenAI setup: You'll need your OpenAI API key here
+    const configuration = new Configuration({
+        apiKey: 'YOUR_OPENAI_API_KEY',  // Replace with your OpenAI API key
+    });
+    const openai = new OpenAIApi(configuration);
 
     useEffect(() => {
         if (!recognitionRef.current && SpeechRecognition) {
@@ -59,31 +66,18 @@ const SpeechComponent = () => {
         }
     }, [triggered]);
 
-    // Function to classify intent using OpenAI API
+    // Function to classify intent using OpenAI
     const classifyAndPerformAction = async (sentences) => {
         try {
-            const prompt = {
-                model: 'gpt-3.5-turbo',
-                messages: [{ role: 'system', content: `Determine if the following sentence is about finding an object or performing an action: "${sentences}". Reply with "find" or "action".` }],
-                max_tokens: 10
-            };
+            const prompt = `Determine if the following sentence is about finding an object or performing an action: "${sentences}". Reply with "find" or "action".`;
 
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${process.env.REACT_APP_TURBO_VISION_API_KEY}` // Use env variable
-                },
-                body: JSON.stringify(prompt)
+            const response = await openai.createCompletion({
+                model: 'text-davinci-003',
+                prompt: prompt,
+                max_tokens: 10,
             });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-            }
-
-            const data = await response.json();
-            const intent = data.choices[0].message.content.trim().toLowerCase();
+            const intent = response.data.choices[0].text.trim().toLowerCase();
             console.log('OpenAI classification:', intent);
 
             if (intent === 'find') {
@@ -114,6 +108,7 @@ const SpeechComponent = () => {
     return (
         <div>
             <p>Listen for the word "recall" to start capturing sentences...</p>
+            {/* Optionally display or use the sentencesAfterTrigger.current data */}
         </div>
     );
 };

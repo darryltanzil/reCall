@@ -52,7 +52,6 @@ const CameraComponent = () => {
         }
     };
 
-
     const encodeImage = (imageBlob) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -64,6 +63,31 @@ const CameraComponent = () => {
             reader.readAsDataURL(imageBlob);
         });
     };
+
+    async function sendPostRequest(requestData) {
+        try {
+            requestData = JSON.parse(requestData);
+            requestData.timestamp = new Date().toISOString();
+            const response = await fetch('https://recall-c320lqmkc-skyleapas-projects.vercel.app/frame', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
+
+            const data = await response.json();
+            console.log('API response:', JSON.stringify(data, null, 2));
+            return data;
+        } catch (error) {
+            console.error('Error sending request to API:', error);
+        }
+    }
 
     const sendToAPI = async (base64Image) => {
         const prompt = {
@@ -131,7 +155,6 @@ const CameraComponent = () => {
                         "additionalProperties": false
                     }
                 }
-
             },
             max_tokens: 300
         };
@@ -152,6 +175,7 @@ const CameraComponent = () => {
             }
 
             const data = await response.json();
+            await sendPostRequest(data.choices[0].message.content);
             console.log('API response:', JSON.stringify(data.choices[0].message.content, null, 2));
             return data;
         } catch (error) {
@@ -159,42 +183,34 @@ const CameraComponent = () => {
         }
     };
 
-    const handleScreenshotClick = async () => {
-        const context = canvasRef.current.getContext('2d');
-        context.drawImage(webcamVideo.current, 0, 0, videoWidth, videoHeight);
-
-        canvasRef.current.toBlob(async (blob) => {
-            const base64Image = await encodeImage(blob);
-
-            const apiResponse = await sendToAPI(base64Image);
-
-            setApiResponse(apiResponse);
-
-            if (apiResponse && apiResponse.choices && apiResponse.choices[0]) {
-                setScore(apiResponse.choices[0].message.content);
-            }
-        }, 'image/png');
-    };
-
     const startStream = async () => {
         await startVideoStream();
 
         const render = async () => {
             const context = canvasRef.current.getContext('2d');
-            setInterval(() => {
+            setInterval(async () => {
                 context.drawImage(webcamVideo.current, 0, 0, videoWidth, videoHeight);
                 const screenshotDataUrl = canvasRef.current.toDataURL('image/png');
                 setScreenshotUrls(prevScreenshotUrls => [...prevScreenshotUrls, screenshotDataUrl]);
                 screenshotCount.current += 1;
 
+                // Send to API every 9th image
                 if (screenshotCount.current % 9 === 0) {
                     const imageGrid = document.getElementById('imageGrid');
-                    html2canvas(imageGrid).then(canvas => {
+                    html2canvas(imageGrid).then(async (canvas) => {
+                        const blob = await new Promise((resolve) => canvas.toBlob(resolve));
+                        const base64Image = await encodeImage(blob);
+
+                        // Send image to API
+                        await sendToAPI(base64Image);
+
+                        // Trigger download
                         const link = document.createElement('a');
                         link.download = 'screenshot.png';
                         link.href = canvas.toDataURL('image/png');
                         link.click();
                     });
+
                     screenshotCount.current = 0;
                     imageGrid.innerHTML = '';
                 }
@@ -225,10 +241,6 @@ const CameraComponent = () => {
                 <button className="peepee" onClick={() => startStream()}>
                     Start webcam
                 </button>
-
-                <button className="send-screenshot" onClick={handleScreenshotClick}>
-                    Send Screenshot to API
-                </button>
             </div>
 
             <RecallComponent parentScore={score} />
@@ -244,13 +256,12 @@ const CameraComponent = () => {
                 ))}
             </div>
 
-            {/* Display the API response */}
             <div className="api-response">
                 <h3>API Response:</h3>
                 {apiResponse ? (
                     <pre>{JSON.stringify(apiResponse, null, 2)}</pre>
                 ) : (
-                    <p>No response yet. Click "Send Screenshot to API" to see the result.</p>
+                    <p>No response yet. Wait for the next 9th image to be sent.</p>
                 )}
             </div>
         </>
