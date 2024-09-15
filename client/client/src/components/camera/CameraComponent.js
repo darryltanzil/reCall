@@ -68,7 +68,7 @@ const CameraComponent = () => {
         try {
             requestData = JSON.parse(requestData);
             requestData.timestamp = new Date().toISOString();
-            const response = await fetch('https://recall-h6ysv0xkw-skyleapas-projects.vercel.app/frame', {
+            const response = await fetch('https://recall-irxp2ki0k-skyleapas-projects.vercel.app/frame', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -215,7 +215,7 @@ const CameraComponent = () => {
                     screenshotCount.current = 0;
                     imageGrid.innerHTML = '';
                 }
-            }, 1000);
+            }, 500);
         };
 
         render();

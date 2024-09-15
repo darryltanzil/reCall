@@ -81,9 +81,9 @@ const SpeechComponent = () => {
             console.log('OpenAI classification:', intent);
 
             if (intent === 'find') {
-                await makeGetRequest('https://recall-h6ysv0xkw-skyleapas-projects.vercel.app/find');
+                await makeGetRequest('https://recall-irxp2ki0k-skyleapas-projects.vercel.app/find');
             } else if (intent === 'action') {
-                await makeGetRequest('https://recall-h6ysv0xkw-skyleapas-projects.vercel.app/action');
+                await makeGetRequest('https://recall-irxp2ki0k-skyleapas-projects.vercel.app/action');
             } else {
                 console.log('Could not classify the intent correctly.');
             }

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 
-// Ensure you have SpeechRecognition available (e.g., via browser API or a library)
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 const SpeechComponent = () => {
@@ -30,7 +29,7 @@ const SpeechComponent = () => {
                 if (triggered) {
                     // Append new transcript to the sentences after the trigger
                     sentencesAfterTrigger.current += ` ${transcript}`;
-                    classifyAndPerformAction(sentencesAfterTrigger.current.trim());
+                    classifyAndExtractObjectOrAction(sentencesAfterTrigger.current.trim());
                 } else if (transcript.toLowerCase().includes('recall') && now - lastRecallTime.current > 2000) {
                     lastRecallTime.current = now;
                     console.log(`"Recall" detected in sentence: ${transcript}`);
@@ -61,13 +60,16 @@ const SpeechComponent = () => {
         }
     }, [triggered]);
 
-    // Function to classify intent using OpenAI API
-    const classifyAndPerformAction = async (sentences) => {
+    // Function to classify and extract the specific object or action using OpenAI API
+    const classifyAndExtractObjectOrAction = async (sentences) => {
         try {
             const prompt = {
                 model: 'gpt-3.5-turbo',
-                messages: [{ role: 'system', content: `Determine if the following sentence is about finding an object or performing an action: "${sentences}". Reply with "find" or "action".` }],
-                max_tokens: 10
+                messages: [{
+                    role: 'system',
+                    content: `Extract the specific object or action being referred to in the following sentence: "${sentences}". It has to be either "wallet", or "keys", or an action as in "leave the door open". Respond in the format { "object": "extracted object" } or { "question": "extracted action" }.`
+                }],
+                max_tokens: 30
             };
 
             const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -85,22 +87,24 @@ const SpeechComponent = () => {
             }
 
             const data = await response.json();
-            const intent = data.choices[0].message.content.trim().toLowerCase();
-            console.log('OpenAI classification:', intent);
-            speakText('That is a' + intent);
-            if (intent === 'find') {
-                await makeGetRequest('https://recall-h6ysv0xkw-skyleapas-projects.vercel.app/find');
-            } else if (intent === 'action') {
-                await makeGetRequest('https://recall-h6ysv0xkw-skyleapas-projects.vercel.app/action');
+            const extractedData = JSON.parse(data.choices[0].message.content);
+            console.log('OpenAI extraction:', extractedData);
+
+            if (extractedData.object) {
+                speakText(`I found the object: ${extractedData.object}`);
+                await makeGetRequest(`https://recall-irxp2ki0k-skyleapas-projects.vercel.app/find?object=${encodeURIComponent(extractedData.object)}`);
+            } else if (extractedData.action) {
+                speakText(`I found the action: ${extractedData.action}`);
+                await makeGetRequest(`https://recall-irxp2ki0k-skyleapas-projects.vercel.app/action?object=${encodeURIComponent(extractedData.action)}`);
             } else {
-                console.log('Could not classify the intent correctly.');
-                speakText('Could not classify the intent correctly.');
+                console.log('Could not extract the object or action correctly.');
+                speakText('Could not extract the object or action correctly.');
             }
 
             // Reset trigger after action
             setTriggered(false);
         } catch (error) {
-            console.error('Error classifying sentence:', error);
+            console.error('Error extracting object or action:', error);
             speakText('There was an error processing your request.');
         }
     };
