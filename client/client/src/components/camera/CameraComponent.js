@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import "./CameraStyle.css";
 import html2canvas from 'html2canvas';
 import RecallComponent from './RecallComponent';
-import {request} from "axios";
 
 const CameraComponent = () => {
     const [stream, setStream] = useState(null);
@@ -90,7 +89,6 @@ const CameraComponent = () => {
         }
     }
 
-
     const sendToAPI = async (base64Image) => {
         const prompt = {
             model: "gpt-4o-mini",
@@ -157,7 +155,6 @@ const CameraComponent = () => {
                         "additionalProperties": false
                     }
                 }
-
             },
             max_tokens: 300
         };
@@ -186,42 +183,34 @@ const CameraComponent = () => {
         }
     };
 
-    const handleScreenshotClick = async () => {
-        const context = canvasRef.current.getContext('2d');
-        context.drawImage(webcamVideo.current, 0, 0, videoWidth, videoHeight);
-
-        canvasRef.current.toBlob(async (blob) => {
-            const base64Image = await encodeImage(blob);
-
-            const apiResponse = await sendToAPI(base64Image);
-
-            setApiResponse(apiResponse);
-
-            if (apiResponse && apiResponse.choices && apiResponse.choices[0]) {
-                setScore(apiResponse.choices[0].message.content);
-            }
-        }, 'image/png');
-    };
-
     const startStream = async () => {
         await startVideoStream();
 
         const render = async () => {
             const context = canvasRef.current.getContext('2d');
-            setInterval(() => {
+            setInterval(async () => {
                 context.drawImage(webcamVideo.current, 0, 0, videoWidth, videoHeight);
                 const screenshotDataUrl = canvasRef.current.toDataURL('image/png');
                 setScreenshotUrls(prevScreenshotUrls => [...prevScreenshotUrls, screenshotDataUrl]);
                 screenshotCount.current += 1;
 
+                // Send to API every 9th image
                 if (screenshotCount.current % 9 === 0) {
                     const imageGrid = document.getElementById('imageGrid');
-                    html2canvas(imageGrid).then(canvas => {
+                    html2canvas(imageGrid).then(async (canvas) => {
+                        const blob = await new Promise((resolve) => canvas.toBlob(resolve));
+                        const base64Image = await encodeImage(blob);
+
+                        // Send image to API
+                        await sendToAPI(base64Image);
+
+                        // Trigger download
                         const link = document.createElement('a');
                         link.download = 'screenshot.png';
                         link.href = canvas.toDataURL('image/png');
                         link.click();
                     });
+
                     screenshotCount.current = 0;
                     imageGrid.innerHTML = '';
                 }
@@ -252,10 +241,6 @@ const CameraComponent = () => {
                 <button className="peepee" onClick={() => startStream()}>
                     Start webcam
                 </button>
-
-                <button className="send-screenshot" onClick={handleScreenshotClick}>
-                    Send Screenshot to API
-                </button>
             </div>
 
             <RecallComponent parentScore={score} />
@@ -276,7 +261,7 @@ const CameraComponent = () => {
                 {apiResponse ? (
                     <pre>{JSON.stringify(apiResponse, null, 2)}</pre>
                 ) : (
-                    <p>No response yet. Click "Send Screenshot to API" to see the result.</p>
+                    <p>No response yet. Wait for the next 9th image to be sent.</p>
                 )}
             </div>
         </>
