@@ -41,10 +41,12 @@ const SpeechComponent = () => {
 
             recognition.onerror = (event) => {
                 console.error('Speech recognition error', event);
+                speakText('Could you repeat that?');
             };
 
             recognition.onend = () => {
                 console.log('Speech recognition service disconnected');
+                speakText("Let me remember");
             };
 
             recognition.start();
@@ -85,19 +87,21 @@ const SpeechComponent = () => {
             const data = await response.json();
             const intent = data.choices[0].message.content.trim().toLowerCase();
             console.log('OpenAI classification:', intent);
-
+            speakText('That is a' + intent);
             if (intent === 'find') {
-                await makeGetRequest('https://recall-c320lqmkc-skyleapas-projects.vercel.app/find');
+                await makeGetRequest('https://recall-h6ysv0xkw-skyleapas-projects.vercel.app/find');
             } else if (intent === 'action') {
-                await makeGetRequest('https://recall-c320lqmkc-skyleapas-projects.vercel.app/action');
+                await makeGetRequest('https://recall-h6ysv0xkw-skyleapas-projects.vercel.app/action');
             } else {
                 console.log('Could not classify the intent correctly.');
+                speakText('Could not classify the intent correctly.');
             }
 
             // Reset trigger after action
             setTriggered(false);
         } catch (error) {
             console.error('Error classifying sentence:', error);
+            speakText('There was an error processing your request.');
         }
     };
 
@@ -106,14 +110,25 @@ const SpeechComponent = () => {
         try {
             const response = await axios.get(url);
             console.log('GET request successful:', response.data);
+
+            // Speak the response data
+            speakText(response.data);
         } catch (error) {
             console.error('Error making GET request:', error);
+            speakText('The information could not be found in memory.');
         }
     };
 
+    // Function to speak text using SpeechSynthesis API
+    const speakText = (text) => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        window.speechSynthesis.speak(utterance);
+    };
+
     return (
-        <div>
-            <p>Listen for the word "recall" to start capturing sentences...</p>
+        <div className="message-container">
+            <p className="message-text">End the sentence with the word "recall" to obtain memories.</p>
         </div>
     );
 };

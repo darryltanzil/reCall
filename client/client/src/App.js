@@ -7,7 +7,7 @@ function App() {
   return (
     <div className="App">
       <Router>
-        <NavigationBar />
+        {/*<NavigationBar />*/}
         <header className="App-header">
           <Routes>
             <Route exact path="LivePage" element={<LivePage />} />
