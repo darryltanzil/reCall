@@ -1,11 +1,7 @@
-const cohere = require('cohere-ai');
 const db = require('./firebase/firebase');
 const { calculateTimeAgo } = require('./find');
-const { CohereClient } = require("cohere-ai");
+const { OpenAI } = require('openai');  // Import OpenAI SDK
 
-const API_KEY = 'cEzNShRcjQ2DX2Cgg41ksK0UlV8B2RRUIlrAMQm4';
-
-const client = new CohereClient({ token: API_KEY });      
 /**
  * Finds the location and timestamp of an action by analyzing if the action was performed.
  * @param {string} question - The question/action to search for.
@@ -24,46 +20,56 @@ async function action(question) {
             .get();
     
         if (snapshot.empty) {
-            return { actionPerformed: false };
+            return { actionPerformed: false, response: 'No records found' };
         }
-    
-        // Iterate over each document and check with Cohere Chat API
-        for (const doc of snapshot.docs) {
+
+        // Combine data from all documents into a single string
+        const records = snapshot.docs.map((doc) => {
             const data = doc.data();
             const context = data.context;
             const transcript = data.transcript;
-      
-            const response = await client.chat(
-                {
-                    message: `You are a backend assistant designed to help determine whether an action/question has occurred. 
-                            You will receive the question, as well as data that you will use to determine whether the question has happened or not.
-                            Start the answer with a "yes" or "no", and then answer the question in one sentence, saying nothing about the given data, and only a confirmation/denial of the action that happened.
-                            Based on the following information, can you predict whether the action in the question happened or not?
-                            For example: "yes, you did leave your water bottle on the table"
-                            question: ${question}
-                            transcript: ${transcript}  
-                            context: ${context.objects.join(', ')}`,
-                    model: "command-r-plus",
-                    preamble: "You are a backend assistant designed to help determine whether an action/question has occurred. You will receive the question, as well as data in the form of a transcript and content that you will use to determine whether the question has happened or not."
-                }
-            )
+            const timestamp = new Date(data.timestamp).toISOString();
 
-            const prediction = response.text.trim().toLowerCase();  // Get the prediction
-            const timeAgo = calculateTimeAgo(new Date(data.timestamp)); // Calculate "time ago" from timestamp
+            return `Transcript: ${transcript}.
+                    Context: Objects: ${context.objects.join(', ')}, Actions: ${context.actions}, Location: ${context.location}.
+                    Timestamp: ${timestamp}`;
+        }).join('\n\n');
 
-            if (prediction.includes('yes')) {
-                return {
-                    actionPerformed: true,
-                    response: prediction,
-                    location: context.location,
-                    timeAgo: timeAgo
-                    };
-                }
-            }
-    
+        // Send the entire dataset to GPT for analysis
+        const response = await openai.chat.completions.create({
+            model: "gpt-4",  // or use the specific GPT model you want
+            messages: [
+                { role: "system", content: "You are a backend assistant designed to help determine whether an action/question has occurred. You will receive a question and several records of recent events. Your task is to evaluate all the records and determine whether the action in the question occurred anytime recently. Provide a short confirmation message if the action is identified. If the action is not found, state that no records match the action. You do not need to give any information about the record itself, such as the timestamp. Keep it to 1 sentence." },
+                { role: "user", content: `Question: ${question}\nRecent records:\n${records}` }
+            ],
+            max_tokens: 150,  // Adjust based on your needs
+        });
+
+        // Clean the response
+        const cleanedResponse = response.choices[0].message.content.trim().toLowerCase();
+
+        // Check if the response indicates that the action was performed
+        if (cleanedResponse.startsWith('yes')) {
+            // Extract timestamp from the response
+            const matchingRecord = snapshot.docs.find(doc => {
+                const data = doc.data();
+                const transcript = data.transcript;
+                const context = data.context;
+                return cleanedResponse.includes(transcript) || cleanedResponse.includes(context.objects.join(', '));
+            });
+            const timeAgo = matchingRecord ? calculateTimeAgo(new Date(matchingRecord.data().timestamp)) : null;
+
+            return {
+                actionPerformed: true,
+                response: cleanedResponse,
+                timeAgo: timeAgo
+            };
+        }
+
+        // If no action was performed or GPT didn't find a match
         return {
-            response: prediction,
-            actionPerformed: false
+            actionPerformed: false,
+            response: cleanedResponse
         };
     } catch (error) {
         console.error('Error finding action:', error);
