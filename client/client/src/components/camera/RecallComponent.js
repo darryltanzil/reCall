@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
+import './SpeechComponent.css'; // Ensure the CSS is imported
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -8,6 +9,7 @@ const SpeechComponent = () => {
     const [triggered, setTriggered] = useState(false);
     const lastRecallTime = useRef(0);
     const sentencesAfterTrigger = useRef('');
+    const [conversationLog, setConversationLog] = useState([]); // State for conversation log
 
     useEffect(() => {
         if (!recognitionRef.current && SpeechRecognition) {
@@ -22,18 +24,17 @@ const SpeechComponent = () => {
                     .map(result => result[0].transcript)
                     .join(' ');
 
-                console.log('Transcribed:', transcript);
+                logConversation('User', transcript); // Log user transcript
 
                 const now = Date.now();
 
                 if (triggered) {
-                    // Append new transcript to the sentences after the trigger
                     sentencesAfterTrigger.current += ` ${transcript}`;
                     classifyAndExtractObjectOrAction(sentencesAfterTrigger.current.trim());
                 } else if (transcript.toLowerCase().includes('recall') && now - lastRecallTime.current > 2000) {
                     lastRecallTime.current = now;
                     speakText("Yes?");
-                    console.log(`"Recall" detected in sentence: ${transcript}`);
+                    logConversation('Bot', 'Yes?'); // Log bot response
                     setTriggered(true);
                     sentencesAfterTrigger.current = ''; // Reset after "recall"
                 }
@@ -42,16 +43,17 @@ const SpeechComponent = () => {
             recognition.onerror = (event) => {
                 console.error('Speech recognition error', event);
                 speakText('Could you repeat that?');
+                logConversation('Bot', 'Could you repeat that?'); // Log bot error response
             };
 
             recognition.onend = () => {
                 console.log('Speech recognition service disconnected');
                 speakText("Let me remember");
+                logConversation('Bot', 'Let me remember'); // Log on-end response
             };
 
             recognition.start();
 
-            // Cleanup function
             return () => {
                 if (recognitionRef.current) {
                     recognitionRef.current.stop();
@@ -61,7 +63,6 @@ const SpeechComponent = () => {
         }
     }, [triggered]);
 
-    // Function to classify and extract the specific object or action using OpenAI API
     const classifyAndExtractObjectOrAction = async (sentences) => {
         try {
             const prompt = {
@@ -78,7 +79,9 @@ const SpeechComponent = () => {
                 }],
                 max_tokens: 30
             };
-            console.log(`Extract the specific object or action being referred to in the following sentence: "${sentences}". Respond in the format { "object": "A string that is either 'wallet', 'water bottle', or 'keys'" } or { "question": "'did i high five someone'', 'was I in front of a grouo of people'" }.`);
+
+            logConversation('Bot', `Analyzing the sentence: "${sentences}"`); // Log bot analysis
+
             const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -95,42 +98,47 @@ const SpeechComponent = () => {
 
             const data = await response.json();
             const extractedData = JSON.parse(data.choices[0].message.content);
-            console.log('OpenAI extraction:', extractedData);
+            logConversation('Bot', `Extraction result: ${JSON.stringify(extractedData)}`); // Log extraction result
 
             if (extractedData.object) {
                 speakText(`I found the object: ${extractedData.object}`);
+                logConversation('Bot', `I found the object: ${extractedData.object}`); // Log object found
                 await makeGetRequest(`https://recall-irxp2ki0k-skyleapas-projects.vercel.app/find?object=${encodeURIComponent(extractedData.object)}`);
             } else if (extractedData.action) {
                 speakText(`I found the action: ${extractedData.action}`);
+                logConversation('Bot', `I found the action: ${extractedData.action}`); // Log action found
                 await makeGetRequest(`https://recall-irxp2ki0k-skyleapas-projects.vercel.app/action?object=${encodeURIComponent(extractedData.action)}`);
             } else {
                 console.log('Could not extract the object or action correctly.');
                 speakText('Could not extract the object or action correctly.');
+                logConversation('Bot', 'Could not extract the object or action correctly.');
             }
 
-            // Reset trigger after action
-            setTriggered(false);
+            setTriggered(false); // Reset trigger
         } catch (error) {
             console.error('Error extracting object or action:', error);
             speakText('There was an error processing your request.');
+            logConversation('Bot', 'There was an error processing your request.');
         }
     };
 
-    // Function to make GET request
     const makeGetRequest = async (url) => {
         try {
             const response = await axios.get(url);
             console.log('GET request successful:', response.data);
-
-            // Speak the response data
+            logConversation('Bot', `Response: ${response.data}`); // Log GET request response
             speakText(response.data);
         } catch (error) {
             console.error('Error making GET request:', error);
             speakText('The information could not be found in memory.');
+            logConversation('Bot', 'The information could not be found in memory.'); // Log GET request error
         }
     };
 
-    // Function to speak text using SpeechSynthesis API
+    const logConversation = (sender, message) => {
+        setConversationLog(prevLog => [...prevLog, { sender, message }]);
+    };
+
     const speakText = (text) => {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'en-US';
@@ -140,6 +148,13 @@ const SpeechComponent = () => {
     return (
         <div className="message-container">
             <p className="message-text">End the sentence with the word "recall" to obtain memories.</p>
+            <div className="conversation">
+                {conversationLog.map((log, index) => (
+                    <p key={index} className={`message ${log.sender === 'User' ? 'user' : 'bot'}`}>
+                        <strong>{log.sender}:</strong> {log.message}
+                    </p>
+                ))}
+            </div>
         </div>
     );
 };

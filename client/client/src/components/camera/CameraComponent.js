@@ -68,7 +68,7 @@ const CameraComponent = () => {
         try {
             requestData = JSON.parse(requestData);
             requestData.timestamp = new Date().toISOString();
-            const response = await fetch('https://recall-irxp2ki0k-skyleapas-projects.vercel.app/frame', {
+            const response = await fetch('https://recall-gjjyaf73h-skyleapas-projects.vercel.app/frame', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
