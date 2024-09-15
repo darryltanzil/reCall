@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import "./CameraStyle.css";
 import html2canvas from 'html2canvas';
 import RecallComponent from './RecallComponent';
+import {request} from "axios";
 
 const CameraComponent = () => {
     const [stream, setStream] = useState(null);
@@ -52,7 +53,6 @@ const CameraComponent = () => {
         }
     };
 
-
     const encodeImage = (imageBlob) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -64,6 +64,32 @@ const CameraComponent = () => {
             reader.readAsDataURL(imageBlob);
         });
     };
+
+    async function sendPostRequest(requestData) {
+        try {
+            requestData = JSON.parse(requestData);
+            requestData.timestamp = new Date().toISOString();
+            const response = await fetch('https://recall-c320lqmkc-skyleapas-projects.vercel.app/frame', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
+
+            const data = await response.json();
+            console.log('API response:', JSON.stringify(data, null, 2));
+            return data;
+        } catch (error) {
+            console.error('Error sending request to API:', error);
+        }
+    }
+
 
     const sendToAPI = async (base64Image) => {
         const prompt = {
@@ -152,6 +178,7 @@ const CameraComponent = () => {
             }
 
             const data = await response.json();
+            await sendPostRequest(data.choices[0].message.content);
             console.log('API response:', JSON.stringify(data.choices[0].message.content, null, 2));
             return data;
         } catch (error) {
@@ -244,7 +271,6 @@ const CameraComponent = () => {
                 ))}
             </div>
 
-            {/* Display the API response */}
             <div className="api-response">
                 <h3>API Response:</h3>
                 {apiResponse ? (
