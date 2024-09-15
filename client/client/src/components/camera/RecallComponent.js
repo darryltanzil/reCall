@@ -10,9 +10,14 @@ const SpeechComponent = () => {
     const lastRecallTime = useRef(0);
     const sentencesAfterTrigger = useRef('');
     const [conversationLog, setConversationLog] = useState([]); // State for conversation log
+    const [recognitionStarted, setRecognitionStarted] = useState(false); // New state for tracking recognition start
+
+    const startRecognition = () => { // New function to start recognition
+        setRecognitionStarted(true);
+    };
 
     useEffect(() => {
-        if (!recognitionRef.current && SpeechRecognition) {
+        if (!recognitionRef.current && SpeechRecognition && recognitionStarted) { // Updated condition
             const recognition = new SpeechRecognition();
             recognition.continuous = true;
             recognition.interimResults = false;
@@ -48,8 +53,6 @@ const SpeechComponent = () => {
 
             recognition.onend = () => {
                 console.log('Speech recognition service disconnected');
-                speakText("Let me remember");
-                logConversation('Bot', 'Let me remember'); // Log on-end response
             };
 
             recognition.start();
@@ -61,7 +64,7 @@ const SpeechComponent = () => {
                 }
             };
         }
-    }, [triggered]);
+    }, [triggered, recognitionStarted]);
 
     const classifyAndExtractObjectOrAction = async (sentences) => {
         try {
@@ -147,7 +150,8 @@ const SpeechComponent = () => {
 
     return (
         <div className="message-container">
-            <p className="message-text">End the sentence with the word "recall" to obtain memories.</p>
+            <button onClick={startRecognition}>Start Speech Recognition</button> {/* New button */}
+            <p className="message-text">Start the sentence with the word "recall" to obtain memories.</p>
             <div className="conversation">
                 {conversationLog.map((log, index) => (
                     <p key={index} className={`message ${log.sender === 'User' ? 'user' : 'bot'}`}>

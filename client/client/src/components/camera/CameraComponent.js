@@ -236,26 +236,18 @@ const CameraComponent = () => {
                 </button>
             </div>
 
-            <RecallComponent parentScore={score} />
-
-            <div id="imageGrid" style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gridTemplateRows: 'repeat(3, 1fr)',
-                gap: '10px'
-            }}>
-                {screenshotUrls.map((url, index) => (
-                    <img key={index} src={url} alt={`Screenshot ${index + 1}`} style={{ width: '100%', height: 'auto' }} />
-                ))}
-            </div>
-
-            <div className="api-response">
-                <h3>API Response:</h3>
-                {apiResponse ? (
-                    <pre>{JSON.stringify(apiResponse, null, 2)}</pre>
-                ) : (
-                    <p>No response yet. Wait for the next 9th image to be sent.</p>
-                )}
+            <div className="screenshot-section">
+                <h2>Live Screenshotting Feed</h2>
+                <div id="imageGrid" style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gridTemplateRows: 'repeat(3, 1fr)',
+                    gap: '10px'
+                }}>
+                    {screenshotUrls.map((url, index) => (
+                        <img key={index} src={url} alt={`Screenshot ${index + 1}`} style={{ width: '100%', height: 'auto' }} />
+                    ))}
+                </div>
             </div>
         </>
     );

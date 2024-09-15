@@ -1,3 +1,43 @@
+.app-container {
+  display: flex;
+  justify-content: space-between;
+}
+.RecallComponent {
+  background-color: white;
+  /* Add any additional styles for your text component here */
+}
+
+.CameraComponent {
+  background-color: #8a8ab9; /* Replace #yourColor with the color you want */
+}
+.screenshot-section {
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+.screenshot-section h2 {
+  margin-bottom: 10px;
+  font-size: 20px;
+  color: #333;
+}
+
+#imageGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 10px;
+}
+
+#imageGrid img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
 .tensorflow-container {
   background-color: #3C96FC;
   width: 700px;
