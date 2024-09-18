@@ -89,12 +89,26 @@ const runTests = async () => {
   // .catch(error => {
   //   console.error('Error:', error);
   // });
+  const mockActionQuery3 = {
+    question: 'where did i put my wallet?'
+  };
+  
+  axios.get(vercelUrl, {
+    params: mockActionQuery3  // Send query parameters properly
+  })
+  .then(response => {
+    // Assuming response.data contains an object with a "response" field
+    console.log('Response:', response.data.response);
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
 
   //console.log('Running tests...');
   
   // await testPostFrame();
-  await testGetFind();
-  await testGetAction();
+  // await testGetFind();
+  // await testGetAction();
 };
 
 // Execute the test functions
